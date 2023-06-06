@@ -94,5 +94,30 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <Import Project="..\SharedProject1\SharedProject1.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- Uncomment this to activate workaround -->
+  <!--Target Name="AssignLinkMetadataForResource" BeforeTargets="AssignLinkMetadata" Condition=" '$(SynthesizeLinkMetadata)' == 'true' ">
+    <ItemGroup>
+      --><!-- Another workaround to keep the shared project folder name as starting point in resource name,
+              so that both WPF designer and runtime can use the same name:
+              https://github.com/dotnet/msbuild/issues/2842 --><!--
+      <Resource Condition="'%(Resource.DefiningProjectFullPath)' != '$(MSBuildProjectFullPath)'">
+        <OriginalDefiningProjectDirectoyName>$([System.IO.Directory]::GetParent(%(Resource.DefiningProjectFullPath)).Name)</OriginalDefiningProjectDirectoyName>
+        <OriginalDefiningProjectFullPath>%(Resource.DefiningProjectFullPath)</OriginalDefiningProjectFullPath>
+      </Resource>
+    </ItemGroup>
+    <AssignLinkMetadata Items="@(Resource)"
+                        Condition="'@(Resource)' != '' and '%(Resource.DefiningProjectFullPath)' != '$(MSBuildProjectFullPath)'">
+      <Output TaskParameter="OutputItems" ItemName="_Temp" />
+    </AssignLinkMetadata>
+
+    <ItemGroup>
+      <Resource Remove="@(_Temp)" />
+      <Resource Include="@(_Temp)">
+        <Link>%(_Temp.OriginalDefiningProjectDirectoyName)\%(_Temp.Link)</Link>
+      </Resource>
+      <_Temp Remove="@(_Temp)" />
+    </ItemGroup>
+  </Target-->
 </Project>
